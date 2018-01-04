@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>基本地图+公交到达圈</title>
+    <link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
+    <link rel="stylesheet" href="http://cache.amap.com/lbs/static/jquery.range.css"/>
+    <script src="http://cache.amap.com/lbs/static/jquery-1.9.1.js"></script>
+    <script src="http://cache.amap.com/lbs/static/es5.min.js"></script>
+    <script src="http://webapi.amap.com/maps?v=1.4.3&key=22d3816e107f199992666d6412fa0691&plugin=AMap.ArrivalRange,AMap.Autocomplete,AMap.PlaceSearch"></script>
+    <script type="text/javascript" src="http://cache.amap.com/lbs/static/addToolbar.js"></script>
+    <script src="http://cache.amap.com/lbs/static/jquery.range.js"></script>
+     <style>
+        div#tip {
+            top: auto;
+            bottom: 25px;
+        }
+        input{
+           width: 120px;
+        }
+
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<div id="myPageTop">
+    <table>
+        <tr>
+            <td>
+                <label>请输入关键字：</label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input id="tipinput"/>
+            </td>
+        </tr>
+    </table>
+</div>
+<div id="tip" class="button-group">
+    <!--点:-->
+    <!--X:<input type="text" name="x" id='lngX' value="118.798312"/>-->
+    <!--Y:<input type="text" name="y" id='latY' value="32.061331"/>-->
+    <!--<br>-->
+    <!--时间：-->
+    <!--<input type="hidden" id="t" class="single-slider" value="30" />-->
+    <!--<br>-->
+    <!--交通类型:-->
+    <!--<select name="v" id="v">-->
+        <!--<option value ="SUBWAY,BUS">地铁+公交</option>-->
+        <!--<option value ="SUBWAY">地铁</option>-->
+        <!--<option value ="BUS">公交</option>-->
+    <!--</select>-->
+    <!--<input type="button" class="button" value="生活圈" onClick="javascript:addPolygon()"/>-->
+    <!--<input type="button" class="button" value="清空" onClick="javascript:delPolygon()"/>-->
+</div>
+<script>
+    var map = new AMap.Map('container', {
+        resizeEnable: true,
+        zoonEnable:true,
+        zoom:11,
+        center: [118.798312,32.061331]
+    });
+    //输入提示后查询
+     var autoOptions = {
+        input: "tipinput"
+    };
+    var auto = new AMap.Autocomplete(autoOptions);
+    var placeSearch = new AMap.PlaceSearch({
+        map: map
+    });  //构造地点查询类
+    AMap.event.addListener(auto, "select", select);//注册监听，当选中某条记录时会触发
+    function select(e) {
+        placeSearch.setCity(e.poi.adcode);
+        placeSearch.search(e.poi.name);  //关键字查询查询
+    }
+    //公交到达圈
+    map.on( 'click', getLnglat);
+      function getLnglat(e) {
+//        var lngX=$("#lngX");
+//        var latY=$("#latY");
+//        lngX.val(e.lnglat.getLng());
+//        latY.val(e.lnglat.getLat());
+        x = e.lnglat.getLng();
+        y = e.lnglat.getLat();
+        addCenterMarker(e.lnglat.getLng(),e.lnglat.getLat());
+        addPolygon();
+    }
+
+      function addCenterMarker(x,y){
+        if(centerMarker){
+            centerMarker.setMap(null);
+        }
+        centerMarker= new AMap.Marker({
+            map: map,
+            icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
+            position: [x,y]
+        });
+    }
+      var arrivalRange = new AMap.ArrivalRange(), x, y, t, v,centerMarker,polygonArray=[];
+      //添加多边形覆盖物
+      function addPolygon() {
+//        x=$("input[name='x']").val();
+//        y=$("input[name='y']").val();
+        t="60";
+        v="SUBWAY,BUS";
+        addCenterMarker(x,y);
+        arrivalRange.search([x,y],t, function(status,result){
+            delPolygon();
+            if(result.bounds){
+                for(var i=0;i<result.bounds.length;i++){
+                   var polygon = new AMap.Polygon({
+                        map:map,
+                        fillColor:"#3366FF",
+                        fillOpacity:"0.4",
+                        strokeColor:"#00FF00",
+                        strokeOpacity:"0.5",
+                        strokeWeight:1
+                    });
+                    polygon.setPath(result.bounds[i]);
+                    polygonArray.push(polygon);
+                }
+            }
+        },{
+            policy:v
+        });
+    }
+
+      function delPolygon(){
+        map.remove(polygonArray);
+        polygonArray=[];
+    }
+
+        var isChanged=false;
+//      $(function(){
+//        $('.single-slider').jRange({
+//            onstatechange: function() {
+//                isChanged=true;
+//            },
+//            from: 1,
+//            to: 60,
+//            step: 1,
+//            scale: [1,15,30,45,60],
+//            format: '%s',
+//            width: 400,
+//            showLabels: true,
+//            showScale: true
+//        });
+//    });
+      addPolygon();
+      window.setInterval(function(){//防止在移动滑动条时频繁触发请
+            if(isChanged){
+               addPolygon();
+               isChanged=false;
+           }
+    },1000)
+</script>
+</body>
+</html>

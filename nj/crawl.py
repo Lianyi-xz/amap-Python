@@ -3,18 +3,21 @@ import csv
 import re
 from lxml import etree
 import time
-
+import random
+#获取页面
 def getHtml(url):
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
+    hd = {"User-Agent": user_agent}
     print("get:"+url)
     try:
-        r = requests.get(url)
+        r = requests.get(url,headers=hd,timeout=30)
         r.raise_for_status()
         r.encoding =r.apparent_encoding
         fillHtml(r.text)
     except:
-        return ""
-    return url
+        print("get:"+url+"  error")
 
+#对抓取内容进行处理
 def fillHtml(html):
     doc = etree.HTML(html)
     nodes_list = doc.xpath("/html/body/div[3]/div[1]/div[5]/div[2]/ul/li")
@@ -48,12 +51,13 @@ def fillHtml(html):
 
     may_page = doc.xpath('//*[@id="bottom_ad_li"]/div[2]')
     for page in may_page:
+        # 若存在下一页，则爬取下一页
         if page.xpath('./a[@class="next"]/@href'):
-            #time.sleep(2)
+            #限制爬虫下载速度
+            time.sleep(random.randint(5,30))
             getHtml(page.xpath('./a[@class="next"]/@href')[0])
         else:
             print("end")
-
 
 
 if __name__ == '__main__':
