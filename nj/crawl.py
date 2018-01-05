@@ -45,9 +45,12 @@ def fillHtml(html):
 
         url = node.xpath("./div[1]/a/@href")[0]
 
-        with open("rent.csv", "a",newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow([title,street,community,price,url])
+        with open("rent.csv", "a",newline='',encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            if community == "":
+                writer.writerow([title,street,price,url])
+            else:
+                writer.writerow([title,community, price, url])
 
     may_page = doc.xpath('//*[@id="bottom_ad_li"]/div[2]')
     for page in may_page:

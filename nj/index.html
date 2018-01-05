@@ -1,161 +1,269 @@
-<!doctype html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
-    <title>基本地图+公交到达圈</title>
-    <link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
-    <link rel="stylesheet" href="http://cache.amap.com/lbs/static/jquery.range.css"/>
-    <script src="http://cache.amap.com/lbs/static/jquery-1.9.1.js"></script>
-    <script src="http://cache.amap.com/lbs/static/es5.min.js"></script>
-    <script src="http://webapi.amap.com/maps?v=1.4.3&key=22d3816e107f199992666d6412fa0691&plugin=AMap.ArrivalRange,AMap.Autocomplete,AMap.PlaceSearch"></script>
-    <script type="text/javascript" src="http://cache.amap.com/lbs/static/addToolbar.js"></script>
-    <script src="http://cache.amap.com/lbs/static/jquery.range.js"></script>
-     <style>
-        div#tip {
-            top: auto;
-            bottom: 25px;
-        }
-        input{
-           width: 120px;
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+        <title>58租房</title>
+        <link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css" />
+        <link rel="stylesheet" href="http://cache.amap.com/lbs/static/jquery.range.css" />
+        <script src="http://cache.amap.com/lbs/static/jquery-1.9.1.js"></script>
+        <script src="http://cache.amap.com/lbs/static/es5.min.js"></script>
+        <script src="http://webapi.amap.com/maps?v=1.3&key=22d3816e107f199992666d6412fa0691&plugin=AMap.ArrivalRange,AMap.Scale,AMap.Geocoder,AMap.Transfer,AMap.Autocomplete"></script>
+        <script src="http://cache.amap.com/lbs/static/jquery.range.js"></script>
+        <style>
+        .control-panel {
+            position: absolute;
+            top: 30px;
+            right: 20px;
         }
 
-    </style>
-</head>
-<body>
-<div id="container"></div>
-<div id="myPageTop">
-    <table>
-        <tr>
-            <td>
-                <label>请输入关键字：</label>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <input id="tipinput"/>
-            </td>
-        </tr>
-    </table>
-</div>
-<div id="tip" class="button-group">
-    <!--点:-->
-    <!--X:<input type="text" name="x" id='lngX' value="118.798312"/>-->
-    <!--Y:<input type="text" name="y" id='latY' value="32.061331"/>-->
-    <!--<br>-->
-    <!--时间：-->
-    <!--<input type="hidden" id="t" class="single-slider" value="30" />-->
-    <!--<br>-->
-    <!--交通类型:-->
-    <!--<select name="v" id="v">-->
-        <!--<option value ="SUBWAY,BUS">地铁+公交</option>-->
-        <!--<option value ="SUBWAY">地铁</option>-->
-        <!--<option value ="BUS">公交</option>-->
-    <!--</select>-->
-    <!--<input type="button" class="button" value="生活圈" onClick="javascript:addPolygon()"/>-->
-    <!--<input type="button" class="button" value="清空" onClick="javascript:delPolygon()"/>-->
-</div>
-<script>
-    var map = new AMap.Map('container', {
-        resizeEnable: true,
-        zoonEnable:true,
-        zoom:11,
-        center: [118.798312,32.061331]
-    });
-    //输入提示后查询
-     var autoOptions = {
-        input: "tipinput"
-    };
-    var auto = new AMap.Autocomplete(autoOptions);
-    var placeSearch = new AMap.PlaceSearch({
-        map: map
-    });  //构造地点查询类
-    AMap.event.addListener(auto, "select", select);//注册监听，当选中某条记录时会触发
-    function select(e) {
-        placeSearch.setCity(e.poi.adcode);
-        placeSearch.search(e.poi.name);  //关键字查询查询
-    }
-    //公交到达圈
-    map.on( 'click', getLnglat);
-      function getLnglat(e) {
-//        var lngX=$("#lngX");
-//        var latY=$("#latY");
-//        lngX.val(e.lnglat.getLng());
-//        latY.val(e.lnglat.getLat());
-        x = e.lnglat.getLng();
-        y = e.lnglat.getLat();
-        addCenterMarker(e.lnglat.getLng(),e.lnglat.getLat());
-        addPolygon();
-    }
-
-      function addCenterMarker(x,y){
-        if(centerMarker){
-            centerMarker.setMap(null);
+        .control-entry {
+            width: 280px;
+            background-color: rgba(119, 136, 153, 0.8);
+            font-family: fantasy, sans-serif;
+            text-align: left;
+            color: white;
+            overflow: auto;
+            padding: 10px;
+            margin-bottom: 10px;
         }
-        centerMarker= new AMap.Marker({
-            map: map,
-            icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
-            position: [x,y]
+
+        .control-input {
+            margin-left: 120px;
+        }
+
+        .control-input input[type="text"] {
+            width: 160px;
+        }
+
+        .control-panel label {
+            float: left;
+            width: 120px;
+        }
+
+        #transfer-panel {
+            position: absolute;
+            background-color: white;
+            max-height: 80%;
+            overflow-y: auto;
+            top: 30px;
+            left: 20px;
+            width: 250px;
+        }
+        </style>
+    </head>
+
+    <body>
+        <div id="container"></div>
+        <div class="control-panel">
+            <div class="control-entry">
+                <label>选择工作地点：</label>
+                <div class="control-input">
+                    <input id="work-location" type="text">
+                </div>
+            </div>
+            <div class="control-entry">
+                <label>选择通勤方式：</label>
+                <div class="control-input">
+                    <input type="radio" name="vehicle" value="SUBWAY,BUS" onClick="takeBus(this)" checked/> 公交+地铁
+                    <input type="radio" name="vehicle" value="SUBWAY" onClick="takeSubway(this)" /> 地铁
+                </div>
+            </div>
+            <div class="control-entry">
+                <label>导入房源文件：</label>
+                <div class="control-input">
+                    <input type="file" name="file" onChange="importRentInfo(this)" />
+                </div>
+            </div>
+        </div>
+        <div id="transfer-panel"></div>
+        <script>
+        //获取基本地图
+        var map = new AMap.Map("container", {
+            resizeEnable: true,
+            zoomEnable: true,
+            center: [118.804492,32.061331],
+            zoom: 11
         });
+        //添加标尺
+        var scale = new AMap.Scale();
+        map.addControl(scale);
+
+        //地铁到达圈对象
+        var arrivalRange = new AMap.ArrivalRange();
+        //经度，纬度，时间，通勤方式
+        var x, y, t, vehicle = "SUBWAY,BUS";
+        //工作地点，工作标记
+        var workAddress, workMarker;
+        //房源标记队列
+        var rentMarkerArray = [];
+        //多边形队列，存储公交到达的计算结果
+        var polygonArray = [];
+        //路线规划
+        var amapTransfer;
+
+        //给标记添加窗体信息
+        var infoWindow = new AMap.InfoWindow({
+          offset: new AMap.Pixel(0, -30)
+        });
+        //输入提示
+        var auto = new AMap.Autocomplete({
+        input: "work-location"
+        });
+        ////注册监听，当选中某条记录时会触发   workLocationSelected 函数
+        AMap.event.addListener(auto, "select", workLocationSelected);
+
+
+    function takeBus(radio) {
+        vehicle = radio.value;
+        loadWorkLocation()
     }
-      var arrivalRange = new AMap.ArrivalRange(), x, y, t, v,centerMarker,polygonArray=[];
-      //添加多边形覆盖物
-      function addPolygon() {
-//        x=$("input[name='x']").val();
-//        y=$("input[name='y']").val();
-        t="60";
-        v="SUBWAY,BUS";
-        addCenterMarker(x,y);
-        arrivalRange.search([x,y],t, function(status,result){
-            delPolygon();
-            if(result.bounds){
-                for(var i=0;i<result.bounds.length;i++){
-                   var polygon = new AMap.Polygon({
-                        map:map,
-                        fillColor:"#3366FF",
-                        fillOpacity:"0.4",
-                        strokeColor:"#00FF00",
-                        strokeOpacity:"0.5",
-                        strokeWeight:1
+
+    function takeSubway(radio) {
+        vehicle = radio.value;
+        loadWorkLocation()
+    }
+    //获取csv文件名
+    function importRentInfo(fileInfo) {
+        var file = fileInfo.files[0].name;
+        //调用loadRentLocationByFile记录所有的房源地址
+        loadRentLocationByFile(file);
+    }
+
+    // 赋值工作地点，加载loadWorkLocation函数（公交到达圈）
+    function workLocationSelected(e) {
+        workAddress = e.poi.name;
+        loadWorkLocation();
+    }
+    //实例化点标记
+    function loadWorkMarker(x, y, locationName) {
+        workMarker = new AMap.Marker({
+            icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
+            position: [x, y]
+
+        });
+        workMarker.setMap(map);
+    }
+
+    //绘制公交到达圈
+    function loadWorkRange(x, y, t, color, v) {
+        arrivalRange.search([x, y], t, function(status, result) {
+            if (result.bounds) {
+                for (var i = 0; i < result.bounds.length; i++) {
+                    var polygon = new AMap.Polygon({
+                        map: map,
+                        fillColor: color,
+                        fillOpacity: "0.4",
+                        strokeColor: color,
+                        strokeOpacity: "0.8",
+                        strokeWeight: 1
                     });
+                    //得到到达圈的多边形路径
                     polygon.setPath(result.bounds[i]);
                     polygonArray.push(polygon);
                 }
             }
-        },{
-            policy:v
+        }, {
+            policy: v
         });
     }
 
-      function delPolygon(){
-        map.remove(polygonArray);
-        polygonArray=[];
+    function addMarkerByAddress(address,title,price,url,) {
+
+        var geocoder = new AMap.Geocoder({
+            city: "南京",
+            radius: 1000
+        });
+        geocoder.getLocation(address, function(status, result) {
+            if (status === "complete" && result.info === 'OK') {
+                var geocode = result.geocodes[0];
+                rentMarker = new AMap.Marker({
+                    map: map,
+                    title: title,
+                    icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+                    position: [geocode.location.getLng(), geocode.location.getLat()]
+                });
+                rentMarkerArray.push(rentMarker);
+
+                rentMarker.content = "<div>房源：<a target = '_blank' href='" + url + "'>" + title + "</a></div>"
+                rentMarker.on('click', function(e) {
+                    infoWindow.setContent(e.target.content);
+                    infoWindow.open(map, e.target.getPosition());
+                    if (amapTransfer) amapTransfer.clear();
+                    amapTransfer = new AMap.Transfer({
+                        map: map,
+                        policy: AMap.TransferPolicy.LEAST_TIME,
+                        city: "南京市",
+                        panel: 'transfer-panel'
+                    });
+                    amapTransfer.search([{
+                        keyword: workAddress
+                    }, {
+                        keyword: address
+                    }], function(status, result) {})
+                });
+            }
+        })
     }
 
-        var isChanged=false;
-//      $(function(){
-//        $('.single-slider').jRange({
-//            onstatechange: function() {
-//                isChanged=true;
-//            },
-//            from: 1,
-//            to: 60,
-//            step: 1,
-//            scale: [1,15,30,45,60],
-//            format: '%s',
-//            width: 400,
-//            showLabels: true,
-//            showScale: true
-//        });
-//    });
-      addPolygon();
-      window.setInterval(function(){//防止在移动滑动条时频繁触发请
-            if(isChanged){
-               addPolygon();
-               isChanged=false;
-           }
-    },1000)
-</script>
-</body>
+    function delWorkLocation() {
+        if (polygonArray) map.remove(polygonArray);
+        if (workMarker) map.remove(workMarker);
+        polygonArray = [];
+    }
+
+    function delRentLocation() {
+        if (rentMarkerArray) map.remove(rentMarkerArray);
+        rentMarkerArray = [];
+    }
+    //正向地理编码，根据地址解析坐标
+    function loadWorkLocation() {
+        delWorkLocation();
+        var geocoder = new AMap.Geocoder({
+            city: "南京",
+            radius: 1000
+        });
+        //地理编码，根据传入的workAddress，返回地理编码结果
+        geocoder.getLocation(workAddress, function(status, result) {
+            if (status === "complete" && result.info === 'OK') {
+                var geocode = result.geocodes[0];
+                //获取坐标
+                x = geocode.location.getLng();
+                y = geocode.location.getLat();
+                //加载工作地点标记
+                loadWorkMarker(x, y);
+                //加载60分钟内工作地点到达圈
+                loadWorkRange(x, y, 60, "#3f67a5", vehicle);
+                //地图移动到工作地点的位置
+                map.setZoomAndCenter(12, [x, y]);
+            }
+        })
+    }
+
+    function loadRentLocationByFile(fileName) {
+        //删除现有的房源标记
+        delRentLocation();
+        //所有的地点记录在集合中
+        var rent_locations = new Set();
+        //jquery操作
+        $.get(fileName, function(data) {
+            data = data.split("\n");
+            data.forEach(function(item, index) {
+                //获取所有的房源的地址信息
+                //rent_locations.add(item);
+                var title = item.split(",")[0];
+                var address = item.split(",")[1];
+                var price = item.split(",")[2];
+                var url = item.split(",")[3];
+                addMarkerByAddress(address,title,price,url);
+            });
+//            rent_locations.forEach(function(element, index) {
+//                //循环添加标记添加房源标记
+//                addMarkerByAddress(element);
+//                //console.log(element[0]);
+//            });
+        });
+    }
+        </script>
+    </body>
 </html>
